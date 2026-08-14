@@ -1,0 +1,59 @@
+/* ── 天文望远镜 ─────────────────────────────────────────────
+   三脚架稳固站立、不再整体漂浮；镜筒绕云台(120,98)左右缓慢扫视（±5°），
+   镜头带青色呼吸光，示意正在"观测星空"。入场随整页淡入上移。 */
+
+.telescope {
+  position: absolute;
+  z-index: 1;
+  width: clamp(96px, 10vw, 145px);
+  pointer-events: none;
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.4));
+  animation: teleIn 0.8s var(--ease-out) 0.4s both;
+}
+
+.telescope svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 镜筒扫视：绕云台旋转 ±5°，10s 一个来回，节奏舒缓 */
+.telescope__tube {
+  transform-origin: 120px 98px;
+  animation: tubeScan 10s ease-in-out infinite;
+}
+
+@keyframes tubeScan {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes teleIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* 物镜呼吸光（只动透明度，避免与旋转父级冲突） */
+.telescope__lens-glow {
+  animation: lensPulse 4s ease-in-out infinite;
+}
+
+@keyframes lensPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* 窄屏（单列布局）隐藏，避免遮挡文字 */
+@media (max-width: 980px) {
+  .telescope {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .telescope,
+  .telescope__tube,
+  .telescope__lens-glow {
+    animation: none;
+  }
+}

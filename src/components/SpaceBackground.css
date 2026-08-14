@@ -1,0 +1,624 @@
+/* ── 宇宙星空背景 ─────────────────────────────────────────────
+   层级：基底渐变 → 场景层（银河/星云/星尘/星芒/极光/星球，随滚动视差）
+         → 流星、飞船（固定层，无限循环巡航）
+   动画只动 transform / opacity，均加 will-change 走合成层，保证流畅。 */
+
+.space-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 120% 90% at 50% -20%, rgba(109, 91, 208, 0.34), transparent 55%),
+    radial-gradient(ellipse 90% 70% at 88% 112%, rgba(45, 180, 210, 0.14), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 4% 108%, rgba(214, 92, 148, 0.1), transparent 55%),
+    linear-gradient(163deg, #05081f 0%, #0b1038 46%, #181046 100%);
+}
+
+/* ── 场景层（随滚动视差上移） ─────────────────────────────── */
+.space-bg__scene {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* 银河斜带 */
+.space-bg__milkyway {
+  position: absolute;
+  top: -12%;
+  left: 50%;
+  width: 140vw;
+  height: 60vh;
+  margin-left: -70vw;
+  transform: rotate(-22deg);
+  background:
+    radial-gradient(ellipse 50% 46% at 42% 50%, rgba(168, 160, 255, 0.13), transparent 68%),
+    radial-gradient(ellipse 46% 40% at 60% 44%, rgba(126, 208, 255, 0.09), transparent 68%);
+  filter: blur(10px);
+  will-change: transform;
+  animation: milkywayDrift 90s ease-in-out infinite alternate;
+}
+
+@keyframes milkywayDrift {
+  from { transform: rotate(-22deg) translate3d(-1.5vw, 0, 0); opacity: 0.75; }
+  to   { transform: rotate(-22deg) translate3d(1.5vw, 0, 0); opacity: 1; }
+}
+
+/* 星云光晕 */
+.space-bg__nebula {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(46px);
+  opacity: 0.6;
+  will-change: transform;
+}
+
+.space-bg__nebula--violet {
+  top: -10%;
+  left: -10%;
+  width: 58vw;
+  height: 58vw;
+  background: radial-gradient(circle, rgba(124, 92, 255, 0.26), transparent 68%);
+  animation: nebulaDrift 38s ease-in-out infinite alternate;
+}
+
+.space-bg__nebula--teal {
+  right: -12%;
+  bottom: -16%;
+  width: 54vw;
+  height: 54vw;
+  background: radial-gradient(circle, rgba(46, 196, 182, 0.17), transparent 68%);
+  animation: nebulaDrift 50s ease-in-out infinite alternate-reverse;
+}
+
+.space-bg__nebula--coral {
+  top: 32%;
+  right: -4%;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, rgba(255, 120, 150, 0.11), transparent 66%);
+  animation: nebulaDrift 62s ease-in-out infinite alternate;
+}
+
+@keyframes nebulaDrift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(5vw, -3vh, 0) scale(1.15); }
+}
+
+/* ── 星尘：整层缓慢摇曳 + 每颗星独立闪烁（负延迟分散相位） ──
+   外层 .space-bg__stars 做摇曳动画，内层 .space-bg__stars-inner
+   承接 JS 按 data-depth 施加的滚动视差位移 —— 两层分工，transform 互不覆盖。 */
+.space-bg__stars {
+  position: absolute;
+  inset: -15vh 0;
+  will-change: transform;
+}
+
+.space-bg__stars-inner {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.space-bg__stars--far { animation: starsSway 150s ease-in-out infinite alternate; }
+.space-bg__stars--mid { animation: starsSway 195s ease-in-out infinite alternate-reverse; }
+.space-bg__stars--near { animation: starsSway 240s ease-in-out infinite alternate; }
+
+@keyframes starsSway {
+  from { transform: translate3d(-1.2%, -0.5%, 0); }
+  to   { transform: translate3d(1.2%, 0.5%, 0); }
+}
+
+.space-bg__star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.55);
+  will-change: opacity;
+  animation: twinkle var(--tw-duration, 4s) ease-in-out infinite;
+  animation-delay: var(--tw-delay, 0s);
+}
+
+.space-bg__stars--far .space-bg__star {
+  background: #dbe6ff;
+  box-shadow: 0 0 4px rgba(190, 210, 255, 0.4);
+}
+
+.space-bg__stars--mid .space-bg__star {
+  background: #e8ecff;
+}
+
+.space-bg__stars--near .space-bg__star {
+  background: #fff8e6;
+  box-shadow: 0 0 10px rgba(255, 235, 190, 0.8);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: var(--tw-min, 0.3); }
+  50% { opacity: var(--tw-max, 1); }
+}
+
+/* ── 十字星芒（偶尔闪烁的亮星） ───────────────────────────── */
+.space-bg__sparkle {
+  position: absolute;
+  width: var(--sp-size, 12px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 26%, rgba(190, 215, 255, 0.85) 46%, transparent 72%);
+  box-shadow: 0 0 16px 4px rgba(170, 205, 255, 0.4);
+  will-change: transform, opacity;
+  animation: sparklePulse var(--sp-duration, 4s) ease-in-out infinite;
+  animation-delay: var(--sp-delay, 0s);
+}
+
+.space-bg__sparkle::before,
+.space-bg__sparkle::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(220, 235, 255, 0.9), transparent);
+}
+
+.space-bg__sparkle::before {
+  left: 50%;
+  top: 50%;
+  width: 340%;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.space-bg__sparkle::after {
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 340%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes sparklePulse {
+  0%, 100% { transform: scale(0.35); opacity: 0.2; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+/* ── 极光（地平线光带，缓缓摆动） ─────────────────────────── */
+.space-bg__aurora {
+  position: absolute;
+  left: -15%;
+  width: 130%;
+  height: 46vh;
+  bottom: -16vh;
+  filter: blur(26px);
+  will-change: transform, opacity;
+}
+
+.space-bg__aurora--teal {
+  background:
+    radial-gradient(52% 90% at 26% 100%, rgba(64, 224, 208, 0.22), transparent 70%),
+    radial-gradient(46% 80% at 52% 100%, rgba(90, 120, 255, 0.2), transparent 70%),
+    radial-gradient(40% 70% at 78% 100%, rgba(46, 196, 182, 0.16), transparent 70%);
+  animation: auroraWaveA 22s ease-in-out infinite alternate;
+}
+
+.space-bg__aurora--violet {
+  background:
+    radial-gradient(48% 70% at 60% 100%, rgba(160, 100, 255, 0.2), transparent 72%),
+    radial-gradient(42% 60% at 86% 100%, rgba(255, 120, 190, 0.14), transparent 70%),
+    radial-gradient(38% 55% at 34% 100%, rgba(120, 90, 248, 0.16), transparent 70%);
+  animation: auroraWaveB 30s ease-in-out infinite alternate;
+}
+
+@keyframes auroraWaveA {
+  from { transform: translateX(-5%) skewX(-7deg) scaleY(0.92); opacity: 0.75; }
+  to   { transform: translateX(5%) skewX(7deg) scaleY(1.12); opacity: 1; }
+}
+
+@keyframes auroraWaveB {
+  from { transform: translateX(5%) skewX(6deg) scaleY(1.1); opacity: 0.6; }
+  to   { transform: translateX(-5%) skewX(-6deg) scaleY(0.95); opacity: 0.9; }
+}
+
+/* ── 星球 ────────────────────────────────────────────────── */
+.space-bg__planet {
+  position: absolute;
+  border-radius: 50%;
+  width: var(--p-size);
+  height: var(--p-size);
+  will-change: transform;
+  animation: planetFloat var(--p-float, 11s) ease-in-out infinite;
+  animation-delay: var(--p-delay, 0s);
+}
+
+@keyframes planetFloat {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -14px, 0); }
+}
+
+/* 地球 —— 蓝绿色带大陆，月亮绕行 */
+.space-bg__planet--earth {
+  --p-size: clamp(78px, 9vw, 126px);
+  --p-float: 10s;
+  top: 60vh;
+  left: 76vw;
+  background: radial-gradient(circle at 32% 28%, #b8f2ff 0%, #5cc8ee 34%, #2e86c8 66%, #16487f 100%);
+  box-shadow:
+    inset -14px -12px 28px rgba(3, 16, 44, 0.6),
+    inset 4px 3px 10px rgba(255, 255, 255, 0.3),
+    0 0 46px rgba(79, 195, 232, 0.3);
+}
+
+/* 大陆层：承载在伪元素上缓慢自转（绕球心，140s 一圈） */
+.space-bg__planet--earth::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(30% 22% at 64% 36%, rgba(120, 220, 140, 0.85), transparent 62%),
+    radial-gradient(34% 24% at 36% 64%, rgba(96, 205, 130, 0.8), transparent 62%),
+    radial-gradient(24% 16% at 72% 70%, rgba(150, 230, 160, 0.75), transparent 60%);
+  animation: planetSpin 140s linear infinite;
+}
+
+.space-bg__moon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 26%;
+  height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #fdf6e3, #cfc7a8 70%, #a49a80);
+  box-shadow: 0 0 10px rgba(253, 246, 227, 0.5);
+  will-change: transform;
+  animation: moonOrbit 8s linear infinite;
+}
+
+@keyframes moonOrbit {
+  from { transform: translate(-50%, -50%) rotate(0deg) translateX(calc(var(--p-size, 100px) * 0.98)); }
+  to   { transform: translate(-50%, -50%) rotate(360deg) translateX(calc(var(--p-size, 100px) * 0.98)); }
+}
+
+/* 紫色气态巨行星 —— 条纹带 */
+.space-bg__planet--gas {
+  --p-size: clamp(84px, 10vw, 148px);
+  --p-float: 13s;
+  --p-delay: -5s;
+  top: 9vh;
+  left: 66vw;
+  background:
+    radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.3), transparent 44%),
+    radial-gradient(circle at 30% 28%, #c9b8ff 0%, #9d7cf5 34%, #6d4fd4 66%, #3a2a8f 100%);
+  box-shadow:
+    inset -16px -14px 30px rgba(22, 8, 66, 0.65),
+    inset 5px 4px 14px rgba(255, 255, 255, 0.25),
+    0 0 52px rgba(157, 124, 245, 0.3);
+}
+
+/* 条纹层：承载在伪元素上缓慢自转（90s 一圈），条纹流转即"自转"感 */
+.space-bg__planet--gas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, transparent 46%, rgba(24, 12, 70, 0.28) 48%, rgba(24, 12, 70, 0.28) 54%, transparent 56%),
+    linear-gradient(180deg, transparent 24%, rgba(255, 255, 255, 0.1) 26%, rgba(255, 255, 255, 0.1) 31%, transparent 33%);
+  animation: planetSpin 90s linear infinite;
+}
+
+@keyframes planetSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* 冰星 —— 淡蓝小行星，细环 */
+.space-bg__planet--ice {
+  --p-size: clamp(40px, 4.5vw, 62px);
+  --p-float: 9s;
+  --p-delay: -3s;
+  top: 78vh;
+  left: 11vw;
+  background: radial-gradient(circle at 32% 28%, #eaf9ff 0%, #9fdcf2 42%, #4a9cc9 76%, #275f8f 100%);
+  box-shadow:
+    inset -8px -6px 18px rgba(10, 40, 80, 0.55),
+    inset 3px 2px 8px rgba(255, 255, 255, 0.5),
+    0 0 30px rgba(150, 220, 255, 0.3);
+}
+
+.space-bg__planet--ice::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 168%;
+  height: 56%;
+  transform: translate(-50%, -50%) rotate(24deg);
+  border-radius: 50%;
+  border: 2.5px solid rgba(210, 240, 255, 0.6);
+  box-shadow: 0 0 8px rgba(180, 225, 255, 0.3);
+}
+
+/* ── 首页装饰层：宇航员 + 望远镜（融入背景，随滚动视差） ────
+   位于场景层内：继承整层视差，再按 data-depth=0.05 叠加漂移；
+   只渲染在 home 变体（auth 页保持安静）。 */
+.space-bg__hero-decor {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.space-bg__hero-decor .astro {
+  top: 9%;
+  right: 4%;
+}
+
+.space-bg__hero-decor .telescope {
+  right: 5%;
+  bottom: 7%;
+}
+
+/* ── 分区色调层（滚动联动） ────────────────────────────────
+   页面区块标记 [data-space-section]，JS 把与视口中心最近的
+   区块序号写到根节点 data-tone，对应色调层 1s 交叉过渡。
+   透明度刻意压得很低：底色明度几乎不变，保证前景文字 WCAG AA 对比。 */
+.space-bg__tone {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 1s var(--ease-out);
+  will-change: opacity;
+}
+
+.space-bg[data-tone="0"] .space-bg__tone--a { opacity: 1; }
+.space-bg[data-tone="1"] .space-bg__tone--b { opacity: 1; }
+.space-bg[data-tone="2"] .space-bg__tone--c { opacity: 1; }
+
+/* hero 区：深空蓝紫，顶部一束紫光 */
+.space-bg__tone--a {
+  background: radial-gradient(ellipse 110% 80% at 50% -12%, rgba(109, 91, 208, 0.16), transparent 60%);
+}
+
+/* 探索区：左下青色、右下蓝紫，呼应模块卡片的冷色调 */
+.space-bg__tone--b {
+  background:
+    radial-gradient(ellipse 90% 70% at 10% 110%, rgba(45, 196, 182, 0.1), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 92% 100%, rgba(90, 120, 255, 0.08), transparent 60%);
+}
+
+/* CTA 区：底部暖金、顶部微珊瑚 —— 少量暖色点缀收尾 */
+.space-bg__tone--c {
+  background:
+    radial-gradient(ellipse 110% 80% at 50% 115%, rgba(255, 179, 71, 0.08), transparent 62%),
+    radial-gradient(ellipse 80% 60% at 50% -20%, rgba(255, 120, 150, 0.07), transparent 60%);
+}
+
+/* ── 流星 ──────────────────────────────────────────────────
+   亮头在右端（to right），rotate(θ) 后头朝 (cosθ, sinθ) 右下；
+   位移 (dx, dy) 满足 dy = dx·tanθ，头永远朝前。
+   轨迹中点略向弧线外侧偏移，形成自然的微弧；::after 向后拖出渐隐光丝。 */
+.space-bg__meteor {
+  position: absolute;
+  width: var(--m-len, 150px);
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--m-tail, rgba(191, 224, 255, 0.55)) 40%,
+    var(--m-head, #fff) 80%,
+    #fff 100%
+  );
+  opacity: 0;
+  filter: drop-shadow(0 0 6px var(--m-glow, rgba(180, 210, 255, 0.9)));
+  will-change: transform, opacity;
+  animation:
+    meteorMove var(--m-duration, 8s) linear infinite,
+    meteorFade var(--m-duration, 8s) linear infinite;
+  animation-delay: var(--m-delay, -3s), var(--m-delay, -3s);
+}
+
+/* 拖尾：向飞行反方向延伸的渐隐光丝 */
+.space-bg__meteor::after {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  width: calc(var(--m-len, 150px) * 0.9);
+  height: 2px;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: linear-gradient(to right, transparent, var(--m-tail, rgba(191, 224, 255, 0.55)) 85%);
+  opacity: 0.7;
+}
+
+@keyframes meteorMove {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(var(--m-angle, 38deg))
+      scale(calc(var(--m-scale, 1) * var(--meteor-mul, 1)));
+  }
+  55% {
+    /* 中点向弧线外侧（飞行方向左上方）轻微偏移，轨迹呈自然微弧 */
+    transform: translate3d(
+        calc(var(--m-dx, 46vmin) * 0.55),
+        calc(var(--m-dy, 36vmin) * 0.55 - 3.2vmin),
+        0
+      )
+      rotate(var(--m-angle, 38deg))
+      scale(calc(var(--m-scale, 1) * var(--meteor-mul, 1)));
+  }
+  100% {
+    transform: translate3d(var(--m-dx, 46vmin), var(--m-dy, 36vmin), 0) rotate(var(--m-angle, 38deg))
+      scale(calc(var(--m-scale, 1) * var(--meteor-mul, 1)));
+  }
+}
+
+@keyframes meteorFade {
+  0% { opacity: 0; }
+  2.5% { opacity: var(--m-opacity, 0.8); }
+  24% { opacity: var(--m-opacity, 0.8); }
+  38% { opacity: 0; }
+  100% { opacity: 0; }
+}
+
+/* ── 飞船 ──────────────────────────────────────────────────
+   SVG 机头朝右（+x），rotate(负角) 后机头朝右上；
+   位移 (x, y) 满足 y/x = tan(angle)，机头与航向严格同轴。 */
+.space-bg__ship {
+  position: absolute;
+  left: -26%;
+  width: var(--ship-w, 100px);
+  aspect-ratio: 240 / 110;
+  will-change: transform;
+  animation: shipFly var(--fly-duration, 28s) linear infinite;
+  animation-delay: var(--fly-delay, -6s);
+}
+
+.space-bg__ship--distant {
+  filter: blur(0.5px);
+}
+
+.space-bg__ship-sway {
+  position: absolute;
+  inset: 0;
+  display: block;
+  will-change: transform;
+  animation: shipSway 2.8s ease-in-out infinite;
+}
+
+/* 呼吸光晕：机身周围柔光，只动透明度（走合成层） */
+.space-bg__ship-glow {
+  position: absolute;
+  inset: -26%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(139, 124, 247, 0.4), transparent 70%);
+  will-change: opacity;
+  animation: shipGlow 4.5s ease-in-out infinite;
+}
+
+/* 引擎粒子：偶尔向后喷出的小光点，错峰出现后消散 */
+.space-bg__ship-puff {
+  position: absolute;
+  left: 4%;
+  top: 50%;
+  width: 3.4%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff7d6 0%, rgba(255, 209, 102, 0.75) 55%, transparent 75%);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: puffOut 5.4s var(--ease-out) infinite;
+}
+
+.space-bg__ship-svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 14px rgba(139, 124, 247, 0.5)) drop-shadow(0 10px 26px rgba(0, 0, 0, 0.35));
+}
+
+/* 尾焰（尾部朝左喷射，核心贴近机尾） */
+.space-bg__ship-flame {
+  position: absolute;
+  left: -1%;
+  top: 50%;
+  width: 21%;
+  height: 34%;
+  transform-origin: 85% 50%;
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse 46% 44% at 72% 50%,
+    #fff7d6 0%,
+    #ffd166 34%,
+    #ff9a56 64%,
+    rgba(255, 106, 60, 0) 98%
+  );
+  filter: blur(1.2px);
+  animation: flameFlicker 0.16s ease-in-out infinite alternate;
+}
+
+/* 航迹（淡淡的淡蓝色尾迹） */
+.space-bg__ship-trail {
+  position: absolute;
+  left: -56%;
+  top: 50%;
+  width: 58%;
+  height: 3%;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: linear-gradient(to right, transparent, rgba(150, 200, 255, 0.42));
+}
+
+/* 尾翼上的红色信号灯 */
+.space-bg__ship-blink {
+  position: absolute;
+  top: 6%;
+  left: 14%;
+  width: 3.2%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #ff5d7e;
+  box-shadow: 0 0 8px 2px rgba(255, 93, 126, 0.65);
+  animation: shipBlink 1.4s ease-in-out infinite;
+}
+
+@keyframes shipFly {
+  from { transform: translate3d(0, 0, 0) rotate(var(--fly-angle, -23deg)); }
+  to   { transform: translate3d(var(--fly-x, 150vmin), var(--fly-y, -64vmin), 0) rotate(var(--fly-angle, -23deg)); }
+}
+
+@keyframes shipSway {
+  0%, 100% { transform: rotate(-2.4deg) translate3d(0, 0, 0); }
+  50% { transform: rotate(2.4deg) translate3d(0, -6px, 0); }
+}
+
+@keyframes shipGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.75; }
+}
+
+@keyframes puffOut {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) scale(1); }
+  3% { opacity: 0.9; }
+  15% { opacity: 0; transform: translate3d(-300%, 70%, 0) scale(0.2); }
+  100% { opacity: 0; transform: translate3d(-300%, 70%, 0) scale(0.2); }
+}
+
+@keyframes flameFlicker {
+  from { transform: translateY(-50%) scaleX(0.82) scaleY(0.9); opacity: 0.9; }
+  to   { transform: translateY(-50%) scaleX(1.14) scaleY(1.12); opacity: 1; }
+}
+
+@keyframes shipBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* ── auth 变体：星球退到角落、缩小；只留远景小船；流星稍小 ── */
+.space-bg--auth {
+  --meteor-mul: 0.68;
+}
+
+.space-bg--auth .space-bg__planet--earth {
+  --p-size: clamp(56px, 7.5vw, 92px);
+  top: 7vh;
+  left: 82vw;
+}
+
+.space-bg--auth .space-bg__planet--gas,
+.space-bg--auth .space-bg__planet--ice {
+  display: none;
+}
+
+.space-bg--auth .space-bg__ship--primary {
+  display: none;
+}
+
+/* ── 无障碍：减少动态效果 ─────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .space-bg *,
+  .space-bg *::before,
+  .space-bg *::after {
+    animation: none !important;
+  }
+  .space-bg__meteor {
+    opacity: 0;
+  }
+}
